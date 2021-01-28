@@ -102,10 +102,7 @@ export default class AudioStream extends Vue {
     this.isSongLoaded = true
 
     if (this.peerMode == PeerMode.BROADCASTER) {
-      // let stream = this.audioElement.captureStream()
-      // stream.onaddtrack = () => {
-      //   this.holderBroadcast!.gotStream(stream)
-      // }
+      this.peerHolder.gotFile(file)
     }
 
     PlayerModule.setState(PlayerState.PAUSED)
