@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import * as mm from 'music-metadata'
 import { Song } from '@/models/songs'
-import { SongDB } from '../db/index'
+import { SongDBInstance } from '../db/index'
 import md5 from 'md5-file'
 
 import Jimp from 'jimp'
@@ -57,8 +57,10 @@ function getCover(data: mm.IAudioMetadata, filePath: string): image | undefined 
 
 export class MusicScanner {
   private paths: string[]
+  private SongDB: SongDBInstance
 
-  constructor(...paths: string[]) {
+  constructor(appPath: string, ...paths: string[]) {
+    this.SongDB = new SongDBInstance(appPath)
     this.paths = paths
   }
 
@@ -71,14 +73,17 @@ export class MusicScanner {
       await writeBuffer(cover)
     }
     this.storeSong(info)
+    return
   }
 
   public start() {
     console.log('started')
     for (let i in this.paths) {
-      fs.readdir(this.paths[i], async (err: NodeJS.ErrnoException | null, files: string[]) => {
+      fs.readdir(this.paths[i], (err: NodeJS.ErrnoException | null, files: string[]) => {
+        console.log(err, files)
         if (!err) {
           files.forEach((file) => {
+            console.log(file)
             if (audioPatterns.exec(path.extname(file)) !== null) {
               this.processFile(path.join(this.paths[i], file))
                 .catch((err) => console.log('error: ' + err))
@@ -95,9 +100,9 @@ export class MusicScanner {
   }
 
   private async storeSong(info: Song) {
-    const count = await SongDB.countByHash(info.hash)
+    const count = await this.SongDB.countByHash(info.hash)
     if (count == 0) {
-      await SongDB.store(info)
+      await this.SongDB.store(info)
     }
   }
 }

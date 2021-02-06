@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, remote } from 'electron'
 import * as path from 'path'
 import { marshaledSong, Song } from '@/models/songs'
 import { Databases } from './constants'
@@ -58,15 +58,20 @@ let switchConnection = (dbString: string) => {
   return 'undefined.db'
 }
 
-class SongDBInstance {
-  private db = DB({
-    path: path.join(app.getPath('appData'), app.getName(), 'databases', switchConnection(Databases.SONG)),
-    readonly: false,
-    fileMustExist: false,
-    WAL: false,
-    migrate: {
-      migrations: [
-        `-- Up
+export class SongDBInstance {
+  private appPath: string
+  private db: any
+
+  constructor(appPath: string) {
+    this.appPath = appPath
+    this.db = DB({
+      path: path.join((this.appPath, 'databases', switchConnection(Databases.SONG))),
+      readonly: false,
+      fileMustExist: false,
+      WAL: false,
+      migrate: {
+        migrations: [
+          `-- Up
         CREATE TABLE artists (
           artist_id VARCHAR(36) PRIMARY KEY,
           artist_name text
@@ -114,9 +119,10 @@ class SongDBInstance {
         -- Down
         DROP TABLE IF EXISTS 'allsongs';
       `,
-      ],
-    },
-  })
+        ],
+      },
+    })
+  }
 
   private pushIfUnique(tag: 'artists' | 'genre', list: string[] | undefined, song: Song) {
     if (song[tag]) {
@@ -164,8 +170,13 @@ class SongDBInstance {
   }
 
   public async getAllAlbums(): Promise<Album[]> {
-    let albums = this.db.query(`SELECT coverPath, album from allsongs GROUP BY album`)
-    // console.log(albums)
+    let albums = this.db.query(
+      `SELECT GROUP_CONCAT(S.artist_name), coverPath, album from allsongs P 
+    LEFT JOIN artists_bridge B on P._id = B.song
+    LEFT JOIN artists S ON S.artist_id = B.artist
+    GROUP BY album`
+    )
+    console.log(albums)
     return albums as Album[]
   }
 
@@ -228,5 +239,3 @@ class SongDBInstance {
     this.storeGenreBridge(genreID, marshaledSong._id)
   }
 }
-
-export const SongDB = new SongDBInstance()

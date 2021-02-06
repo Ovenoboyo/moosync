@@ -1,5 +1,6 @@
 export enum IpcEvents {
   SCAN_MUSIC = 'scanMusic',
+  SCAN_MUSIC_WORKER = 'scanMusicWorker',
   GET_ALL_SONGS = 'getAllSongs',
   GET_COVER = 'getCover',
   GET_ALBUMS = 'getAlbums',

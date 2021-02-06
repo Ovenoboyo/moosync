@@ -2,6 +2,10 @@ var webpack = require('webpack');
 
 module.exports = {
   runtimeCompiler: true,
+  pages: {
+    index: 'src/main.ts',
+    worker: 'src/worker/main.js'
+  },
   configureWebpack: {
     plugins: [
       new webpack.DefinePlugin({
