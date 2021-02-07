@@ -2,7 +2,7 @@ import { app, remote } from 'electron'
 import * as path from 'path'
 import { marshaledSong, Song } from '@/models/songs'
 import { Databases } from './constants'
-import DB from 'better-sqlite3-helper'
+import DB, { BetterSqlite3Helper } from 'better-sqlite3-helper'
 import { v4 } from 'uuid'
 import { Album } from '@/models/albums'
 
@@ -11,6 +11,7 @@ function unMarshalSong(dbSong: marshaledSong): Song {
     _id: dbSong._id,
     path: dbSong.path,
     coverPath: dbSong.coverPath,
+    size: dbSong.size,
     title: dbSong.title,
     album: dbSong.album,
     date: dbSong.date,
@@ -25,6 +26,8 @@ function unMarshalSong(dbSong: marshaledSong): Song {
     duration: dbSong.duration,
     sampleRate: dbSong.sampleRate,
     hash: dbSong.hash,
+    inode: '',
+    deviceno: '',
   }
 }
 
@@ -33,6 +36,7 @@ function marshalSong(song: Song): marshaledSong {
     _id: v4(),
     path: song.path,
     coverPath: song.coverPath,
+    size: song.size,
     title: song.title,
     album: song.album,
     date: song.date,
@@ -45,6 +49,8 @@ function marshalSong(song: Song): marshaledSong {
     duration: song.duration,
     sampleRate: song.sampleRate,
     hash: song.hash,
+    inode: song.inode,
+    deviceno: song.deviceno,
   }
 }
 
@@ -59,13 +65,11 @@ let switchConnection = (dbString: string) => {
 }
 
 export class SongDBInstance {
-  private appPath: string
-  private db: any
+  private db: BetterSqlite3Helper.DBInstance
 
   constructor(appPath: string) {
-    this.appPath = appPath
     this.db = DB({
-      path: path.join((this.appPath, 'databases', switchConnection(Databases.SONG))),
+      path: path.join(appPath, 'databases', switchConnection(Databases.SONG)),
       readonly: false,
       fileMustExist: false,
       WAL: false,
@@ -86,6 +90,9 @@ export class SongDBInstance {
           _id VARCHAR(36) PRIMARY KEY,
           path TEXT,
           coverPath TEXT,
+          size TEXT NOT NULL,
+          inode TEXT NOT NULL,
+          deviceno TEXT NOT NULL,
           title TEXT,
           album TEXT,
           date TEXT,
@@ -181,8 +188,20 @@ export class SongDBInstance {
   }
 
   public async countByHash(hash: string): Promise<number> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve(this.db.queryFirstCell(`SELECT COUNT(*) FROM allsongs WHERE hash = ?`, hash)!)
+    })
+  }
+
+  public async getBySize(size: string): Promise<{ _id: string }[]> {
+    return new Promise((resolve) => {
+      resolve(this.db.query(`SELECT _id FROM allsongs WHERE size = ?`, size))
+    })
+  }
+
+  public async getInfoByID(id: string): Promise<{ path: string; inode: string; deviceno: string }[]> {
+    return new Promise((resolve) => {
+      resolve(this.db.query(`SELECT path, inode, deviceno FROM allsongs WHERE _id = ?`, id))
     })
   }
 

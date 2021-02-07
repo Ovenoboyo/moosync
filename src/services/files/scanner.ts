@@ -1,12 +1,12 @@
-import fs from 'fs'
+import fs, { promises as fsP } from 'fs'
 import path from 'path'
 import * as mm from 'music-metadata'
-import { Song } from '@/models/songs'
+import { Song, stats } from '@/models/songs'
 import { SongDBInstance } from '../db/index'
-import md5 from 'md5-file'
-
 import Jimp from 'jimp'
 import { v4 } from 'uuid'
+import { performance } from 'perf_hooks'
+import crypto from 'crypto'
 
 interface image {
   path: string
@@ -18,17 +18,19 @@ async function writeBuffer(data: image) {
   return (await Jimp.read(data.data)).cover(320, 320).quality(80).writeAsync(data.path)
 }
 
-function getInfo(data: mm.IAudioMetadata, hash: string, filePath: string, coverPath?: string): Song {
+async function getInfo(data: mm.IAudioMetadata, stats: stats, coverPath?: string): Promise<Song> {
   let artists: string[] = []
   if (data.common.artists) {
     for (let a of data.common.artists) {
       artists.push(...a.split(/[,&]+/))
     }
   }
+
   return {
-    title: data.common.title ? data.common.title : path.basename(filePath),
-    path: filePath,
+    title: data.common.title ? data.common.title : path.basename(stats.path),
+    path: stats.path,
     coverPath: coverPath,
+    size: stats.size,
     album: data.common.album,
     artists: artists,
     date: data.common.date,
@@ -41,7 +43,9 @@ function getInfo(data: mm.IAudioMetadata, hash: string, filePath: string, coverP
     container: data.format.container,
     duration: data.format.duration,
     sampleRate: data.format.sampleRate,
-    hash: hash,
+    hash: undefined,
+    inode: stats.inode,
+    deviceno: stats.deviceno,
   }
 }
 
@@ -64,31 +68,37 @@ export class MusicScanner {
     this.paths = paths
   }
 
-  private async processFile(filePath: string) {
-    const metadata = await mm.parseFile(filePath)
-    const md5Sum = await this.generateChecksum(filePath)
-    const cover = getCover(metadata, filePath)
-    const info = getInfo(metadata, md5Sum, filePath, cover ? cover.path : undefined)
-    if (cover) {
-      await writeBuffer(cover)
-    }
-    this.storeSong(info)
-    return
+  private async scanFile(filePath: string) {
+    const stats = await fsP.stat(filePath)
+    this.storeSong({
+      path: filePath,
+      inode: stats.ino.toString(),
+      deviceno: stats.dev.toString(),
+      size: stats.size.toString(),
+    })
+  }
+
+  private async processFile(stats: stats) {
+    const metadata = await mm.parseFile(stats.path)
+    const cover = getCover(metadata, stats.path)
+    const info = await getInfo(metadata, stats, cover ? cover.path : undefined)
+    return { song: info, cover: cover }
   }
 
   public start() {
-    console.log('started')
     for (let i in this.paths) {
       fs.readdir(this.paths[i], (err: NodeJS.ErrnoException | null, files: string[]) => {
-        console.log(err, files)
         if (!err) {
-          files.forEach((file) => {
-            console.log(file)
+          var t0 = performance.now()
+          let promises: Promise<void>[] = []
+          files.forEach(async (file) => {
             if (audioPatterns.exec(path.extname(file)) !== null) {
-              this.processFile(path.join(this.paths[i], file))
-                .catch((err) => console.log('error: ' + err))
-                .then(() => console.log('scanned: ' + file))
+              console.log('pushed')
+              promises.push(this.scanFile(path.join(this.paths[i], file)))
             }
+          })
+          Promise.all(promises).then(() => {
+            console.log(performance.now() - t0)
           })
         }
       })
@@ -96,13 +106,40 @@ export class MusicScanner {
   }
 
   private async generateChecksum(file: string): Promise<string> {
-    return md5(file)
+    return new Promise((resolve) => {
+      var hash = crypto.createHash('md5')
+      var fileStream = fs.createReadStream(file, { highWaterMark: 256 * 1024 })
+      fileStream.on('data', (data) => {
+        hash.update(data)
+      })
+      fileStream.on('end', function () {
+        resolve(hash.digest('hex'))
+      })
+    })
   }
 
-  private async storeSong(info: Song) {
-    const count = await this.SongDB.countByHash(info.hash)
-    if (count == 0) {
-      await this.SongDB.store(info)
+  private async storeSong(info: stats) {
+    const songsBySize = await this.SongDB.getBySize(info.size)
+    console.log(songsBySize)
+    if (songsBySize.length > 0) {
+      for (let i in songsBySize) {
+        const SongInfo = (await this.SongDB.getInfoByID(songsBySize[i]._id))[0]
+        if (info.deviceno === SongInfo.deviceno) {
+          if (info.inode === SongInfo.inode) {
+            return
+          }
+        } else {
+          const hash1 = await this.generateChecksum(info.path)
+          const hash2 = await this.generateChecksum(SongInfo.path)
+
+          if (hash1 == hash2) return
+        }
+      }
     }
+    let scanned = await this.processFile(info)
+    if (scanned.cover) {
+      await writeBuffer(scanned.cover)
+    }
+    await this.SongDB.store(scanned.song)
   }
 }

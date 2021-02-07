@@ -2,6 +2,7 @@ export interface Song {
   _id?: string
   path: string
   coverPath: string | undefined
+  size: string
   title: string
   album: string | undefined
   artists: string[] | undefined
@@ -15,13 +16,16 @@ export interface Song {
   container: string | undefined
   duration: number | undefined
   sampleRate: number | undefined
-  hash: string
+  hash: string | undefined
+  inode: string
+  deviceno: string
 }
 
 export interface marshaledSong {
   _id: string
   path: string
   coverPath: string | undefined
+  size: string
   title: string
   album: string | undefined
   lyrics: string | undefined
@@ -36,5 +40,14 @@ export interface marshaledSong {
   container: string | undefined
   duration: number | undefined
   sampleRate: number | undefined
-  hash: string
+  hash: string | undefined
+  inode: string
+  deviceno: string
+}
+
+export interface stats {
+  path: string
+  size: string
+  inode: string
+  deviceno: string
 }

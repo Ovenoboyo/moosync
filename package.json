@@ -32,7 +32,6 @@
     "electron": "9.0.0",
     "eslint-plugin-vue": "^7.4.1",
     "jimp": "^0.16.1",
-    "md5-file": "^5.0.0",
     "music-metadata": "^7.6.4",
     "rfc4648": "^1.4.0",
     "socket.io-client": "^3.0.5",
