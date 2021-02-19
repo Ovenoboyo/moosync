@@ -27,17 +27,11 @@
 </template>
 
 <script lang="ts">
-import NewPlaylistModal from '@/components/generic/NewPlaylistModal.vue'
-
 import { Song } from '@/models/songs'
 import { Resizer } from '@/services/ui/resizer'
 import { Component, Prop, Vue } from 'vue-property-decorator'
 
-@Component({
-  components: {
-    NewPlaylistModal,
-  },
-})
+@Component({})
 export default class SongList extends Vue {
   private test: boolean = false
   private lastSelect: string = ''

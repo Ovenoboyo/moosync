@@ -1,10 +1,9 @@
-import Vue from 'vue'
-
-import App from './App.vue'
-import router from './router'
-
 import '@/plugins/vueBootstrap'
 import '@/sass/global.sass'
+
+import App from './App.vue'
+import Vue from 'vue'
+import router from './router'
 import store from './store'
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))

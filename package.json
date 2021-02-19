@@ -1,8 +1,8 @@
 {
   "name": "moosync",
-  "author": "Ovenoboyo <ovenoboyo@gmail.com>",
   "version": "0.0.1",
   "private": true,
+  "author": "Ovenoboyo <ovenoboyo@gmail.com>",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -42,11 +42,12 @@
     "stun": "^2.1.0",
     "utf-8-validate": "^5.0.4",
     "uuid": "^8.3.2",
-    "vue": "^2.6.11",
+    "vue": "^2.6.12",
     "vue-class-component": "^7.2.3",
     "vue-electron": "^1.0.6",
     "vue-property-decorator": "^9.1.2",
     "vue-router": "^3.4.9",
+    "vue-router-layout": "^0.1.6",
     "vuex": "^3.0.1",
     "vuex-class-modules": "^1.2.0",
     "vuex-electron": "^1.0.3",
@@ -70,6 +71,8 @@
     "sass": "^1.32.4",
     "sass-loader": "^10.1.1",
     "typescript": "^3.9.3",
+    "vue-auto-routing": "^1.0.0",
+    "vue-cli-plugin-auto-routing": "~1.2.0",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
     "vue-template-compiler": "^2.6.11"
   },

@@ -1,13 +1,15 @@
-import { app } from 'electron'
 import * as path from 'path'
-import { marshaledSong, Song } from '@/models/songs'
-import { Databases } from './constants'
+
 import DB, { BetterSqlite3Helper } from 'better-sqlite3-helper'
-import { v4 } from 'uuid'
+import { Song, marshaledSong } from '@/models/songs'
+
 import { Album } from '@/models/albums'
-import { artists } from '@/models/artists'
+import { Databases } from './constants'
 import { Playlist } from '../../models/playlists'
+import { app } from 'electron'
+import { artists } from '@/models/artists'
 import { migrations } from './migrations'
+import { v4 } from 'uuid'
 
 function unMarshalSong(dbSong: marshaledSong): Song {
   return {
@@ -256,6 +258,7 @@ export class SongDBInstance {
   }
 
   public async getPlaylistSongs(id: string) {
+    console.log(id)
     //TODO: Get songs for single playlist
   }
 

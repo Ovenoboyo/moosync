@@ -28,8 +28,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import SongList from '@/components/SongList.vue'
-import SongDetails from '@/components/SongDetails.vue'
+import SongList from '@/components/generic/SongList.vue'
+import SongDetails from '@/components/generic/SongDetails.vue'
 
 import { Song } from '@/models/songs'
 import { IpcEvents } from '@/services/ipc/main/constants'

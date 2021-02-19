@@ -1,29 +1,22 @@
 import Router from 'vue-router'
 import Vue from 'vue'
+import { createRouterLayout } from 'vue-router-layout'
+import routes from 'vue-auto-routing'
 
 Vue.use(Router)
 
+const RouterLayout = createRouterLayout((layout) => {
+  return import('@/layouts/' + layout + '.vue')
+})
+
 export default new Router({
+  mode: 'history',
+  base: process.env.BASE_URL,
   routes: [
     {
-      path: '/songs',
-      name: 'All Songs',
-      component: require('@/pages/AllSongs.vue').default,
-    },
-    {
-      path: '/albums',
-      name: 'Albums',
-      component: require('@/pages/Albums.vue').default,
-    },
-    {
-      path: '/artists',
-      name: 'Artists',
-      component: require('@/pages/Artists.vue').default,
-    },
-    {
-      path: '/playlists',
-      name: 'Playlists',
-      component: require('@/pages/Playlists.vue').default,
+      path: '/',
+      component: RouterLayout,
+      children: routes,
     },
   ],
 })

@@ -15,9 +15,14 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
-      disableMainProcessTypescript: false, // Manually disable typescript plugin for main process. Enable if you want to use regular js for the main process (src/background.js by default).
-      mainProcessTypeChecking: true, // Manually enable type checking during webpack bundling for background file.
-      externals: ['better-sqlite3']
+      disableMainProcessTypescript: false,
+      mainProcessTypeChecking: true,
+      externals: [
+        'better-sqlite3'
+      ]
     },
+    autoRouting: {
+      chunkNamePrefix: 'page-'
+    }
   },
 }
